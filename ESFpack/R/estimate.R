@@ -33,6 +33,10 @@ estimate <- function(net, boot_reps = 10, data = NULL, exogs = NULL,
   if (boot_reps < 100) {
     parallel <- FALSE
   }
+  
+  op <- options(stringsAsFactors = FALSE)
+  on.exit(options(op))
+  
   stopifnot(!missing(data))
   vars <- make_vars(net, tie, contagion_varnames, conflict_varnames)
   cont <- vars$contagion

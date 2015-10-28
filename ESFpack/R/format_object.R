@@ -13,6 +13,9 @@
 #'
 format_object <- function(object, coef_type = "as.is", SE = TRUE)
 {
+  op <- options(stringsAsFactors = FALSE)
+  on.exit(options(op))
+  
   out <- summary(object, full = TRUE, quietly = TRUE, coef_type = coef_type)
   if (SE | "miest" %in% class(object)) {
     out$comb <- paste0(strip0(out$Est)," (", strip0(out$SE), ")", out$Sig)

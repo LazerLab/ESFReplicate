@@ -13,6 +13,9 @@
 #'
 format_output <- function(..., full = TRUE, coef_type = "as.is")
 {
+  op <- options(stringsAsFactors = FALSE)
+  on.exit(options(op))
+  
   options(stringsAsFactors = FALSE)
   object_list <- list(...)
   out <- lapply(object_list, format_object, coef_type = coef_type)
