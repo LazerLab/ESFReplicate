@@ -6,14 +6,14 @@ res_cont <- list()
 for (i in 1:14) {
   subs <- c("keep", TRUE)
   ch_keep <- function(x, i) {x$keep <- x$ChapterN %in% setdiff(1:14,i); x}
-  res_conf$y08[[i]] <- estimate("politics", b, ch_keep(at.08,i), incl_conflict = FALSE, subs = subs)
-  res_conf$y10[[i]] <- estimate("politics", b, ch_keep(at.10,i), incl_conflict = FALSE, subs = subs)
-  res_conf$y12[[i]] <- estimate("politics", b, ch_keep(at.12,i), incl_conflict = FALSE, subs = subs)
-  res_conf$y14[[i]] <- estimate("politics", b, ch_keep(at.14,i), incl_conflict = FALSE, subs = subs)
-  res_cont$y08[[i]] <- estimate("politics", b, ch_keep(at.08,i), incl_conflict = TRUE, subs = subs)
-  res_cont$y10[[i]] <- estimate("politics", b, ch_keep(at.10,i), incl_conflict = TRUE, subs = subs)
-  res_cont$y12[[i]] <- estimate("politics", b, ch_keep(at.12,i), incl_conflict = TRUE, subs = subs)
-  res_cont$y14[[i]] <- estimate("politics", b, ch_keep(at.14,i), incl_conflict = TRUE, subs = subs)
+  res_cont$y08[[i]] <- estimate("politics", b, ch_keep(at.08,i), incl_conflict = FALSE, subs = subs)
+  res_cont$y10[[i]] <- estimate("politics", b, ch_keep(at.10,i), incl_conflict = FALSE, subs = subs)
+  res_cont$y12[[i]] <- estimate("politics", b, ch_keep(at.12,i), incl_conflict = FALSE, subs = subs)
+  res_cont$y14[[i]] <- estimate("politics", b, ch_keep(at.14,i), incl_conflict = FALSE, subs = subs)
+  res_conf$y08[[i]] <- estimate("politics", b, ch_keep(at.08,i), incl_conflict = TRUE, subs = subs)
+  res_conf$y10[[i]] <- estimate("politics", b, ch_keep(at.10,i), incl_conflict = TRUE, subs = subs)
+  res_conf$y12[[i]] <- estimate("politics", b, ch_keep(at.12,i), incl_conflict = TRUE, subs = subs)
+  res_conf$y14[[i]] <- estimate("politics", b, ch_keep(at.14,i), incl_conflict = TRUE, subs = subs)
 }
 
 save(res_conf, file="LeaveOneOut_Conf.rda")
