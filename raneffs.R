@@ -3,6 +3,7 @@ library(rstan)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 load("ESF_Data.RData")
+source("finish_data_prep.R")
 
 # helper functions
 enhance_data <- function(data, net = "politics", contagion_varnames = "mvint",
@@ -94,16 +95,16 @@ pars_to_exclude <- c("linear_predictor",
 
 sf_contagion_08 <- sampling(sm_contagion, data = make_stan_data(enh.at.08),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 1819549747, thin = 2)
+  seed = 1819549747, thin = 2, control = list(adapt_delta = .99))
 sf_contagion_10 <- sampling(sm_contagion, data = make_stan_data(enh.at.10),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 494228618, thin = 2)
+  seed = 494228618, thin = 2, control = list(adapt_delta = .99))
 sf_contagion_12 <- sampling(sm_contagion, data = make_stan_data(enh.at.12),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 1794026683, thin = 2)
+  seed = 1794026683, thin = 2, control = list(adapt_delta = .99))
 sf_contagion_14 <- sampling(sm_contagion, data = make_stan_data(enh.at.14),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 630289971, thin = 2, control = list(adapt_delta = .99))
+  seed = 630289971, thin = 2, control = list(adapt_delta = .999))
 
 sf_conflict_08 <- sampling(sm_conflict, data = make_stan_data(enh.at.08),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
@@ -112,18 +113,60 @@ sf_conflict_10 <- sampling(sm_conflict, data = make_stan_data(enh.at.10),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
   seed = 1522916390, thin = 2)
 sf_conflict_12 <- sampling(sm_conflict, data = make_stan_data(enh.at.12),
-  warmup = 50, iter = 300, chains = 4, include = FALSE, pars = pars_to_exclude,
+  warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
   seed = 267347092, thin = 2)
 sf_conflict_14 <- sampling(sm_conflict, data = make_stan_data(enh.at.14),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
   seed = 1910766984, thin = 2, control = list(adapt_delta = .99))
 
-print(sf_contagion_08, "b0")
-print(sf_contagion_10, "b0")
-print(sf_contagion_12, "b0")
-print(sf_contagion_14, "b0")
+b <- 1
 
-print(sf_conflict_08, "b0")
-print(sf_conflict_10, "b0")
-print(sf_conflict_12, "b0")
-print(sf_conflict_14, "b0")
+cb_pol_08 <- estimate("politics", b, at.08,
+  incl_conflict = FALSE)$fitted_model$coefficients["mvint.pol.both"]
+cb_pol_10 <- estimate("politics", b, at.10,
+  incl_conflict = FALSE)$fitted_model$coefficients["mvint.pol.both"]
+cb_pol_12 <- estimate("politics", b, at.12,
+  incl_conflict = FALSE)$fitted_model$coefficients["mvint.pol.both"]
+cb_pol_14 <- estimate("politics", b, at.14,
+  incl_conflict = FALSE)$fitted_model$coefficients["mvint.pol.both"]
+
+mean(extract(sf_contagion_08)$b0)
+mean(extract(sf_contagion_10)$b0)
+mean(extract(sf_contagion_12)$b0)
+mean(extract(sf_contagion_14)$b0)
+
+vars <- c("mvint.pol.both", "ideomd.pol.both", "ideosd0.pol.both",
+  "party.rhhi.pol.both")
+cb_pol_08_cdiv <- estimate("politics", b, at.08,
+  incl_conflict = TRUE)$fitted_model$coefficients[vars]
+cb_pol_10_cdiv <- estimate("politics", b, at.10,
+  incl_conflict = TRUE)$fitted_model$coefficients[vars]
+cb_pol_12_cdiv <- estimate("politics", b, at.12,
+  incl_conflict = TRUE)$fitted_model$coefficients[vars]
+cb_pol_14_cdiv <- estimate("politics", b, at.14,
+  incl_conflict = TRUE)$fitted_model$coefficients[vars]
+
+contagion_results <- data.frame(
+  model_type = "contagion",
+  year = c(2008, 2010, 2012, 2014),
+  variable = rep(names(cb_pol_08), 4),
+  orig_results = c(cb_pol_08, cb_pol_10, cb_pol_12,
+    cb_pol_14),
+  raneffs  = c(mean(extract(sf_contagion_08)$b0),
+    mean(extract(sf_contagion_10)$b0),
+    mean(extract(sf_contagion_12)$b0),
+    mean(extract(sf_contagion_14)$b0)))
+
+
+conflict_results <- data.frame(
+  model_type = "conflict",
+  year = rep(c(2008, 2010, 2012, 2014), each = 4),
+  variable = c(names(cb_pol_08_cdiv), names(cb_pol_10_cdiv),
+    names(cb_pol_12_cdiv), names(cb_pol_14_cdiv)),
+  orig_results = c(cb_pol_08_cdiv, cb_pol_10_cdiv, cb_pol_12_cdiv,
+    cb_pol_14_cdiv),
+  raneffs  = c(colMeans(extract(sf_conflict_08)$b0),
+    colMeans(extract(sf_conflict_10)$b0),
+    colMeans(extract(sf_conflict_12)$b0),
+    colMeans(extract(sf_conflict_14)$b0)))
+
