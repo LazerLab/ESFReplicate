@@ -1,0 +1,10 @@
+Package: ESFpack
+Version: 1.0
+Title: Tools for the ESF dataset
+Author: Katya Ognyanova, William Minozzi
+Maintainer: William Minozzi <william.minozzi@gmail.com>
+Description: Methods for the Conflict and Contagion project. That's it.
+Depends: mice, abind, ggplot2, lmtest, sandwich
+License: GPL-3
+NeedsCompilation: no
+Packaged: 2015-09-18 19:41:31 UTC; minozzi.1
