@@ -1,5 +1,6 @@
 library(ESFpack)
 library(rstan)
+library(shinystan)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 load("ESF_Data.RData")
@@ -77,50 +78,75 @@ for(group in c("vint", "Interest_pol", "Ideology", "Party", "Race",
   "SchYear", "ChapterN"))
   make_stan_code_bits(group)
 
-
-# begin analysis
+# set up data
 enh.at.08 <- enhance_data(at.08)
 enh.at.10 <- enhance_data(at.10)
 enh.at.12 <- enhance_data(at.12)
 enh.at.14 <- enhance_data(at.14)
 
+# arguments for sampling calls
 pars_to_exclude <- c("linear_predictor",
-  "a_e_vint", "a_s_vint",
-  "a_e_Interest_pol", "a_s_Interest_pol",
-  "a_e_Ideology", "a_s_Ideology",
-  "a_e_Party", "a_s_Party",
-  "a_e_Race", "a_s_Race",
-  "a_e_SchYear", "a_s_SchYear",
-  "a_e_ChapterN", "a_s_ChapterN")
+  "a_m_vint", "a_e_vint", "a_s_vint",
+  "a_m_Interest_pol", "a_e_Interest_pol", "a_s_Interest_pol",
+  "a_m_Ideology", "a_e_Ideology", "a_s_Ideology",
+  "a_m_Party", "a_e_Party", "a_s_Party",
+  "a_m_Race", "a_e_Race", "a_s_Race",
+  "a_m_SchYear", "a_e_SchYear", "a_s_SchYear",
+  "a_m_ChapterN", "a_e_ChapterN", "a_s_ChapterN")
+control <- list(adapt_delta = .999, max_treedepth = 12)
 
+# put DVs in global environment for shinystan
+vote_08 <- make_stan_data(enh.at.08)$vote
+vote_10 <- make_stan_data(enh.at.10)$vote
+vote_12 <- make_stan_data(enh.at.12)$vote
+vote_14 <- make_stan_data(enh.at.14)$vote
+
+# fit stan models
 sf_contagion_08 <- sampling(sm_contagion, data = make_stan_data(enh.at.08),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 1819549747, thin = 2, control = list(adapt_delta = .99))
+  seed = 1819549747, thin = 2, control = list(adapt_delta = .99,
+    max_treedepth = 12))
 sf_contagion_10 <- sampling(sm_contagion, data = make_stan_data(enh.at.10),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 494228618, thin = 2, control = list(adapt_delta = .99))
+  seed = 494228618, thin = 2, control = list(adapt_delta = .999,
+    max_treedepth = 12))
 sf_contagion_12 <- sampling(sm_contagion, data = make_stan_data(enh.at.12),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 1794026683, thin = 2, control = list(adapt_delta = .99))
-sf_contagion_14 <- sampling(sm_contagion, data = make_stan_data(enh.at.14),
-  warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 630289971, thin = 2, control = list(adapt_delta = .999))
-
-sf_conflict_08 <- sampling(sm_conflict, data = make_stan_data(enh.at.08),
-  warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 296610865, thin = 2)
-sf_conflict_10 <- sampling(sm_conflict, data = make_stan_data(enh.at.10),
-  warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 1522916390, thin = 2)
+  seed = 1794026683, thin = 2, control = list(adapt_delta = .999,
+    max_treedepth = 13))
 sf_conflict_12 <- sampling(sm_conflict, data = make_stan_data(enh.at.12),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 267347092, thin = 2)
+  seed = 267347092, thin = 2, control = control)
+
+sf_contagion_14 <- sampling(sm_contagion, data = make_stan_data(enh.at.14),
+  warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
+  seed = 630289971, thin = 2, control = list(adapt_delta = .999,
+    max_treedepth = 14))
+sf_conflict_08 <- sampling(sm_conflict, data = make_stan_data(enh.at.08),
+  warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
+  seed = 296610865, thin = 2, control =  list(adapt_delta = .999,
+    max_treedepth = 13))
+sf_conflict_10 <- sampling(sm_conflict, data = make_stan_data(enh.at.10),
+  warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
+  seed = 1522916390, thin = 2, control = list(adapt_delta = .999,
+    max_treedepth = 13))
 sf_conflict_14 <- sampling(sm_conflict, data = make_stan_data(enh.at.14),
   warmup = 50, iter = 550, chains = 4, include = FALSE, pars = pars_to_exclude,
-  seed = 1910766984, thin = 2, control = list(adapt_delta = .99))
+  seed = 1910766984, thin = 2, control = list(adapt_delta = .999,
+    max_treedepth = 13))
 
+# inspect results to diagnose fits
+sso <- launch_shinystan(sf_contagion_08)
+sso <- launch_shinystan(sf_contagion_10)
+sso <- launch_shinystan(sf_contagion_12)
+sso <- launch_shinystan(sf_conflict_12)
+sso <- launch_shinystan(sf_contagion_14)
+sso <- launch_shinystan(sf_conflict_08)
+sso <- launch_shinystan(sf_conflict_10)
+sso <- launch_shinystan(sf_conflict_14)
+
+# original results (for comparison of coefficients, not inference)
 b <- 1
-
 cb_pol_08 <- estimate("politics", b, at.08,
   incl_conflict = FALSE)$fitted_model$coefficients["mvint.pol.both"]
 cb_pol_10 <- estimate("politics", b, at.10,
@@ -130,11 +156,7 @@ cb_pol_12 <- estimate("politics", b, at.12,
 cb_pol_14 <- estimate("politics", b, at.14,
   incl_conflict = FALSE)$fitted_model$coefficients["mvint.pol.both"]
 
-mean(extract(sf_contagion_08)$b0)
-mean(extract(sf_contagion_10)$b0)
-mean(extract(sf_contagion_12)$b0)
-mean(extract(sf_contagion_14)$b0)
-
+# construct data.frames with results
 vars <- c("mvint.pol.both", "ideomd.pol.both", "ideosd0.pol.both",
   "party.rhhi.pol.both")
 cb_pol_08_cdiv <- estimate("politics", b, at.08,
@@ -156,8 +178,6 @@ contagion_results <- data.frame(
     mean(extract(sf_contagion_10)$b0),
     mean(extract(sf_contagion_12)$b0),
     mean(extract(sf_contagion_14)$b0)))
-
-
 conflict_results <- data.frame(
   model_type = "conflict",
   year = rep(c(2008, 2010, 2012, 2014), each = 4),
